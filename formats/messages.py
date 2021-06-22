@@ -36,9 +36,18 @@ class MessageCA(Message):
 
 class Frame(object):
 
+    def get_messages(self):
+        return self._messages
+
+    def get_time(self):
+        return self._time
+
+    time = property(get_time)
+    messages = property(get_messages)
+
     def __init__(self, time=None, messages=None):
-        self.time = time
-        self.messages = [] if messages is None else messages
+        self._time = time
+        self._messages = [] if messages is None else messages
 
     def add_message(self, message):
         self.messages.append(message)
@@ -48,11 +57,19 @@ class Frame(object):
     def to_log(self, structure):
         return [self.time] + [m.to_log(structure) for m in self.messages]
 
+    def __iter__(self):
+        return iter(self.messages)
+
 
 class Messages(object):
 
+    def get_frames(self):
+        return self._frames
+
+    frames = property(get_frames)
+
     def __init__(self, frames=None):
-        self.frames = IndexedList() if frames is None else frames
+        self._frames = IndexedList() if frames is None else frames
 
     def get_frame(self, time):
         return self.frames.get_item([time])
@@ -72,3 +89,6 @@ class Messages(object):
             content += f.to_log(structure)
 
         return content
+
+    def __iter__(self):
+        return iter(self.frames.items)

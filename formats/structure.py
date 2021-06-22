@@ -1,3 +1,5 @@
+import json
+
 from components.indexed_list import IndexedList, Index
 from components.util import Util
 
@@ -88,6 +90,15 @@ class ModelType(object):
         self._port_types = [] if port_types is None else port_types
         self._dim = dim
         self._index = index
+
+    def template_message(self, message):
+        template = json.loads(self.template)
+        templated = {}
+
+        for i in range(len(template)):
+            templated[template[i]] = message.values[i]
+
+        return templated
 
     def to_json(self):
         json = {

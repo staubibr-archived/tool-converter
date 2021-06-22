@@ -1,3 +1,5 @@
+import json
+
 from components.config import Config
 from formats.format import Format
 from formats.structure import Info
@@ -65,3 +67,24 @@ if __name__ == '__main__':
 
     print("Done at", datetime.now().strftime("%H:%M:%S"), "\n")
 
+    # for frame in messages:
+    #     print("time: " + frame.time)
+    #
+    #     for message in frame:
+    #         print("coords: " + ','.join(message.id) + ", values: " + ','.join(message.values))
+    #
+    # frame5 = messages.get_frame("5")
+    #
+    # print("\n 5th time frame")
+    # print("time: " + frame5.time + ", number of messages: " + str(len(frame5.messages)))
+    #
+    # message10 = frame5.messages[10]
+    #
+    # print("\n 10th message of 5th time frame")
+    # print("coords: " + ','.join(message10.id) + ", values: " + ','.join(message10.values))
+    #
+    # print("\n 10th message of 5th time frame, templated")
+    # model_type = structure.model_types.get_item("CO2_model")
+    # templated = model_type.template_message(message10)
+    # print("coords: " + ','.join(message10.id) + ", values: " + ','.join(message10.values))
+    # print("coords: " + ','.join(message10.id) + ", templated values: " + json.dumps(templated))
