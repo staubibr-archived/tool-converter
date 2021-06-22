@@ -1,6 +1,6 @@
 import os
 
-from components.parser import Parser
+from components.parser import LineParser
 from formats.messages import Frame, MessageCA
 from components.indexed_list import Index
 
@@ -44,7 +44,7 @@ class ValInitialValue(object):
         return ValInitialValue(coords, value)
 
 
-class Val(Parser):
+class Val(LineParser):
 
     def __init__(self, structure, component):
         super().__init__()
@@ -52,6 +52,9 @@ class Val(Parser):
         self.content = Frame("00:00:00:000")
         self.structure = structure
         self.index = Index()
+
+        self.add_initialrowvalues_messages(component.initialrowvalues)
+        self.add_initialvalue_messages(component.dim, component.initialvalue)
 
     def add_initialvalue_messages(self, dim, initialvalue):
         for x in range(dim.x):

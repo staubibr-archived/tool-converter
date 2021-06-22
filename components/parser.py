@@ -13,6 +13,42 @@ class Parser(object):
     def __init__(self):
         self._content = None
 
+    @abstractmethod
+    def parse(self, files):
+        pass
+
+    @abstractmethod
+    def get_valid_file(self, files):
+        pass
+
+
+class FullParser(Parser):
+
+    def parse(self, files):
+        file = self.get_valid_file(files)
+
+        if file is None:
+            return self.content
+
+        stream = open(file)
+
+        self.full_parse(stream)
+
+        stream.close()
+
+        return self.content
+
+    @abstractmethod
+    def get_valid_file(self, files):
+        pass
+
+    @abstractmethod
+    def full_parse(self, line):
+        pass
+
+
+class LineParser(Parser):
+
     def parse(self, files):
         file = self.get_valid_file(files)
 
@@ -38,3 +74,4 @@ class Parser(object):
     @abstractmethod
     def line_parse(self, line):
         pass
+

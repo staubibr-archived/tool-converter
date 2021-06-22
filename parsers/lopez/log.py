@@ -1,11 +1,11 @@
 import os
 
-from components.parser import Parser
+from components.parser import LineParser
 from formats.messages import Messages, MessageCA, Frame
 from components.indexed_list import Index
 
 
-class Log(Parser):
+class Log(LineParser):
 
     def __init__(self, structure):
         super().__init__()

@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 
 
 def is_simulator_valid(p, arg):
-    if arg in ['CDpp', 'Lopez']:
+    if arg in ['CDpp', 'Lopez', 'Cadmium']:
         return arg
     else:
         p.error('Simulator provided is invalid. Valid simulators are Cdpp or Lopez.')

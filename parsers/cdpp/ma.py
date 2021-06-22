@@ -1,6 +1,6 @@
 import os
 
-from components.parser import Parser
+from components.parser import LineParser
 from components.indexed_list import IndexedList
 from formats.structure import Link, Dim, Structure
 
@@ -201,7 +201,7 @@ class MaComponentCA(MaComponent):
         self.ports.add_item("out", MaPort("output", "out"))
 
 
-class Ma(Parser):
+class Ma(LineParser):
 
     def __init__(self, component_class):
         super().__init__()

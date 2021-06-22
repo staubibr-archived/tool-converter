@@ -412,7 +412,7 @@ class Structure(object):
         return node
 
     def get_model(self, model_name):
-        return self.port_index.get_item([model_name])
+        return self.model_index.get_item([model_name])
 
     def add_port_type(self, name, type, template, model_type):
         exist = self.port_types.get_item([model_type.name, name])

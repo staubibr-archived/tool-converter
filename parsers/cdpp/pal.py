@@ -1,12 +1,12 @@
 import os
 import re
 
-from components.parser import Parser
+from components.parser import LineParser
 from components.util import Util
 from formats.style import Style, Bucket
 
 
-class Pal(Parser):
+class Pal(LineParser):
 
     def __init__(self):
         super().__init__()
