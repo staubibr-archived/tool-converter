@@ -1,7 +1,7 @@
 import os
 
 from components.parser import LineParser
-from formats.messages import Message, MessageCA, Messages, Frame
+from formats.messages import MessageOutput, MessageCA, Messages, Frame
 
 
 class Log(LineParser):
@@ -49,12 +49,15 @@ class Log(LineParser):
             f.add_message(MessageCA(coord, [value]))
 
         else:
-            model_type = self.structure.model_index.get_item(model[0]).model_type
-            model_type = self.structure.model_types.items[model_type]
+            model_type = self.structure.components_index.get_item(model[0]).model_type
+            model_type = self.structure.model_types[model_type.index]
 
             # this is to avoid highlighting coupled models as message origins. In CDpp, atomic models connected to coupled
             # models immediately emit the message received by the inner atomic. It's clearer if that message is not shown.
             if model_type.type == "coupled":
                 return None
 
-            f.add_message(Message([model[0], port], [value]))
+            model = self.structure.get_model(model[0])
+            port = model.model_type.port_types.get_item(port)
+
+            f.add_message(MessageOutput(model, port, [value]))

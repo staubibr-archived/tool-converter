@@ -47,12 +47,12 @@ class Log(LineParser):
         f = self.content.add_frame(Frame(time))
         m = self.index.get_item([time] + coord)
 
-        port_types = self.structure.model_types.get_item(model[0]).port_types
-        port = self.structure.port_types.get_item([model[0], port])
-        i = port_types.index(port)
+        model_type = self.structure.model_types.get_item(model[0])
+        port_type = model_type.port_types.get_item([port])
+        i = int(port_type.index)
 
         if m is None:
-            m = f.add_message(MessageCA(coord, [""] * len(port_types)))
+            m = f.add_message(MessageCA(coord, [""] * len(model_type.port_types)))
             self.index.add_item([time] + coord, m)
 
         m.values[i] = value

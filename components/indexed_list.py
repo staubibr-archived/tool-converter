@@ -68,3 +68,12 @@ class IndexedList(Index):
         self.items.append(item)
 
         return item
+
+    def __iter__(self):
+        return iter(self.items)
+
+    def __len__(self):
+        return len(self.items)
+
+    def __getitem__(self, i):
+        return self.items[i]

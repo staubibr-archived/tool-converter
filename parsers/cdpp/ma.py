@@ -1,7 +1,7 @@
 import os
 
-from components.parser import LineParser
 from components.indexed_list import IndexedList
+from components.parser import LineParser
 from formats.structure import Link, Dim, Structure
 
 
@@ -129,11 +129,15 @@ class MaComponent(object):
     def set_ports(self, value):
         self._ports = value
 
+    def get_template(self):
+        return None
+
     name = property(get_name, set_name)
     type = property(get_type, set_type)
     subcomponents = property(get_subcomponents, set_subcomponents)
     links = property(get_links, set_links)
     ports = property(get_ports, set_ports)
+    template = property(get_template)
 
     def __init__(self, name=None, type=None, subcomponents=None, ports=None, links=None):
         self._name = name
@@ -184,12 +188,16 @@ class MaComponentCA(MaComponent):
     def set_initialrowvalues(self, value):
         self._initialrowvalues = value
 
+    def get_template(self):
+        return [p.name for p in filter(lambda p: p.type == "output", self.ports)]
+
     dim = property(get_dim, set_dim)
     width = property(get_width, set_width)
     height = property(get_height, set_height)
     z = property(get_z, set_z)
     initialvalue = property(get_initialvalue, set_initialvalue)
     initialrowvalues = property(get_initialrowvalues, set_initialrowvalues)
+    template = property(get_template)
 
     def __init__(self, name=None, type=None, subcomponents=None, ports=None, links=None, dim=None, initialvalue=None, initialrowvalues=None):
         super().__init__(name, type, subcomponents, ports, links)
@@ -210,7 +218,7 @@ class Ma(LineParser):
         self.content = IndexedList()
         self.component_class = component_class
 
-        c = self.content.add_item("top", self.component_class("top", "top"))
+        self.content.add_item("top", self.component_class("top", "top"))
 
     def get_valid_file(self, files):
         mas = list(filter(lambda f: os.path.splitext(f)[1] == '.ma', files))
@@ -230,7 +238,7 @@ class Ma(LineParser):
             # finished processing current model, add all subcomponents as models to process in further iterations
             if self.current is not None:
                 for s in self.current.subcomponents:
-                    c = self.content.add_item(s.model, self.component_class(s.model, s.type))
+                    self.content.add_item(s.model, self.component_class(s.model, s.type))
 
             self.current = self.content.get_item(line[1:-1])
 
@@ -256,8 +264,8 @@ class Ma(LineParser):
                     p.name = "out_" + p.name
                     self.current.ports.add_item(p.name, p)
 
-            elif kv[0] == "link":
-                self.current.links.append(Link.link_from_ma(self.current.name, kv[1]))
+            elif kv[0] == "link" and not ("(" in kv[1] and ")" in kv[1]):
+                self.current.links.append(MaUtil.link_from_ma(self.current.name, kv[1]))
 
             elif kv[0] == "dim":
                 self.current.dim = Dim.dim_from_ma(kv[1])
@@ -278,36 +286,60 @@ class Ma(LineParser):
 class MaUtil(object):
 
     @staticmethod
-    def ma_ports_from_links(ma):
-        for c in ma.items:
-            for l in c.links:
-                portsA = ma.get_item(l.modelA).ports
-                portsB = ma.get_item(l.modelB).ports
+    def link_from_ma(component, raw):
+        lr = raw.split(' ')
+        l_split = lr[0].split('@')
+        r_split = lr[1].split('@')
 
-                if portsA.get_item(l.portA) is None:
-                    portsA.add_item(l.portA, MaPort("output", l.portA))
+        if len(l_split) == 1:
+            l_split.append(component)
 
-                if portsB.get_item(l.portB) is None:
-                    portsB.add_item(l.portB, MaPort("input", l.portB))
+        if len(r_split) == 1:
+            r_split.append(component)
+
+        return {"modelA": l_split[1], "portA": l_split[0], "modelB": r_split[1], "portB": r_split[0]}
 
     @staticmethod
-    def ma_to_structure(ma, info):
-        s = Structure(info)
+    def ma_ports_from_links(ma):
+        for c in ma:
+            for l in c.links:
+                portsA = ma.get_item(l["modelA"]).ports
+                portsB = ma.get_item(l["modelB"]).ports
 
-        for c in ma.items:
-            template = '["' + '","'.join([p.name for p in c.ports.items]) + '"]'
+                if portsA.get_item(l["portA"]) is None:
+                    portsA.add_item(l["portA"], MaPort("output", l["portA"]))
 
+                if portsB.get_item(l["portB"]) is None:
+                    portsB.add_item(l["portB"], MaPort("input", l["portB"]))
+
+    @staticmethod
+    def ma_to_structure(ma, simulator, formalism):
+        s = Structure(simulator, formalism)
+
+        for c in ma:
             # This is a bit awkward
             dim = c.dim if hasattr(c, "dim") else None
 
-            model_type = s.add_model_type(c.type.lower(), template, c.get_atomic_or_coupled(), dim)
-            model_node = s.add_model_node(c.name, model_type)
+            message_type = None if c.template is None else s.add_message_type("s_" + c.name, c.template, "No description available.")
+            model_type = s.add_model_type(c.type.lower(), message_type, c.get_atomic_or_coupled(), dim)
+            model_node = s.add_component(c.name, model_type)
 
-            for p in c.ports.items:
-                port_type = s.add_port_type(p.name, p.type, '["out"]', model_type)
-                port_node = s.add_port_node(model_node, port_type)
-                model_type.port_types.append(port_type)
+            for p in c.ports:
+                model_type.add_port_type(p.name, p.type, None)
 
-            s.links += c.links
+        for c in ma:
+            for l in c.links:
+                modelA = s.get_model(l["modelA"])
+                modelB = s.get_model(l["modelB"])
+                portA = modelA.model_type.port_types.get_item(l["portA"])
+                portB = modelB.model_type.port_types.get_item(l["portB"])
+
+                modelA.model_type.links.append(Link(modelA, portA, modelB, portB))
+
+        for c in ma:
+            mt = s.model_types.get_item(c.name)
+
+            for sc in c.subcomponents:
+                mt.add_component(s.get_model(sc.model))
 
         return s

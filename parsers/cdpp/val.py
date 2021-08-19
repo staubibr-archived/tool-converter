@@ -60,11 +60,13 @@ class Val(LineParser):
         for x in range(dim.x):
             for y in range(dim.y):
                 for z in range(dim.z):
+                    # todo : Maybe don't convert to string
                     self.add_message([str(x), str(y), str(z)], [initialvalue])
 
     def add_initialrowvalues_messages(self, initialrowvalues):
         for irv in initialrowvalues:
             for y in range(len(irv.values)):
+                # todo : Maybe don't convert to string
                 self.add_message([irv.row, str(y), '0'], [irv.values[y]])
 
     def add_message(self, coords, value):
